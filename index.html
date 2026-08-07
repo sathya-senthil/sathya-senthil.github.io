@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sathya Senthil's Portfolio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1b1c1e;          /* dark grey background */
+    --bg-panel: #232427;    /* slightly lighter panel grey */
+    --line: #34363a;        /* hairline dividers */
+    --white: #f2f3f5;       /* primary text */
+    --white-dim: #b9bbc0;   /* secondary text */
+    --blue: #3d6fb4;        /* dark blue accent */
+    --blue-bright: #6fa3e0; /* lighter blue for hover/links */
+    --blue-deep: #16273d;   /* deep navy for fills */
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  a { color: var(--blue-bright); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  :focus-visible {
+    outline: 2px solid var(--blue-bright);
+    outline-offset: 3px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--blue-bright);
+  }
+
+  h1, h2, h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--white);
+    margin: 0;
+  }
+
+  /* ---------- Header ---------- */
+
+  header {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 5rem 1.5rem 3.5rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  header .eyebrow { display: block; margin-bottom: 1rem; }
+
+  .name-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  header h1 {
+    font-size: clamp(2.2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .gear-icon {
+    width: clamp(2.6rem, 5vw, 3.6rem);
+    height: clamp(2.6rem, 5vw, 3.6rem);
+    flex-shrink: 0;
+    opacity: 0.92;
+    animation: spin-gear 16s linear infinite;
+  }
+
+  @keyframes spin-gear {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  header .role {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    color: var(--blue-bright);
+    margin-top: 0.4rem;
+  }
+
+  header p.blurb {
+    max-width: 62ch;
+    color: var(--white-dim);
+    margin-top: 1.4rem;
+    font-size: 1.02rem;
+  }
+
+  .contact-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.4rem;
+    margin-top: 1.8rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--white-dim);
+  }
+
+  .contact-row a { color: var(--white-dim); }
+  .contact-row a:hover { color: var(--blue-bright); }
+
+  /* ---------- Projects spine layout ---------- */
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 3.5rem 1.5rem 6rem;
+    position: relative;
+  }
+
+  main::before {
+    /* the signal line running behind the project nodes */
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 1.9rem;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, var(--line) 4%, var(--line) 96%, transparent);
+  }
+
+  .project {
+    position: relative;
+    padding-left: 4.6rem;
+    margin-bottom: 5.5rem;
+  }
+
+  .project:last-child { margin-bottom: 0; }
+
+  .project .node {
+    position: absolute;
+    left: 0.85rem;
+    top: 0.35rem;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 50%;
+    background: var(--blue-deep);
+    border: 1px solid var(--blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--blue-bright);
+  }
+
+  .project .category {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--blue-bright);
+    margin-bottom: 0.5rem;
+  }
+
+  .project h2 {
+    font-size: 1.55rem;
+    font-weight: 600;
+    margin-bottom: 1.4rem;
+  }
+
+  .project-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 2.2rem;
+    align-items: start;
+  }
+
+  /* reverse the order on alternating projects so the eye zig-zags along the spine */
+  .project:nth-child(even) .project-grid {
+    grid-template-columns: 1fr 1.1fr;
+  }
+  .project:nth-child(even) .description { order: 2; }
+  .project:nth-child(even) .media { order: 1; }
+
+  .description p {
+    color: var(--white-dim);
+    margin: 0 0 1rem;
+  }
+  .description p:last-child { margin-bottom: 0; }
+
+  .description strong { color: var(--white); }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.2rem;
+  }
+
+  .tags span {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--blue-bright);
+    border: 1px solid var(--blue);
+    border-radius: 3px;
+    padding: 0.25rem 0.55rem;
+    background: var(--blue-deep);
+  }
+
+  .links {
+    margin-top: 1.3rem;
+    display: flex;
+    gap: 1.2rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+  }
+
+  .media {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.6rem;
+  }
+
+  .media video, .media img {
+    width: 100%;
+    display: block;
+    border-radius: 3px;
+    background: #000;
+  }
+
+  .media .caption {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--white-dim);
+    margin-top: 0.55rem;
+    padding: 0 0.2rem;
+  }
+
+  .heart-render {
+    margin-top: 0.9rem;
+    background: var(--bg-panel);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 0;
+  }
+
+  .heart-render img {
+    background: transparent;
+    max-width: 78%;
+    margin: 0 auto;
+  }
+
+  @media (max-width: 720px) {
+    .project-grid,
+    .project:nth-child(even) .project-grid {
+      grid-template-columns: 1fr;
+    }
+    .project:nth-child(even) .description,
+    .project:nth-child(even) .media {
+      order: initial;
+    }
+    main::before { left: 1.5rem; }
+    .project { padding-left: 3.6rem; }
+    .project .node { left: 0.5rem; width: 1.8rem; height: 1.8rem; }
+  }
+
+  footer {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 3.5rem;
+    border-top: 1px solid var(--line);
+    color: var(--white-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="eyebrow">Portfolio</span>
+  <div class="name-row">
+    <h1>Sathya Senthil</h1>
+    <img class="gear-icon" src="assets/gear_icon_white.png" alt="" aria-hidden="true">
+  </div>
+  <div class="role">Biomedical Engineering and Math @ Rutgers University</div>
+  <p class="blurb">
+    I build projects at the intersection of biomedical engineering, computer vision, medical
+    technology, and 3D design. This portfolio is a running collection of engineering projects,
+    research, and things I'm building to explore how technology can improve healthcare.
+  </p>
+  <div class="contact-row">
+    <a href="mailto:ss4919@scarletmail.rutgers.edu">ss4919@scarletmail.rutgers.edu</a>
+    <a href="https://www.linkedin.com/in/sathyasenthil">LinkedIn</a>
+    <span>New Jersey, USA</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============================================= -->
+  <!-- PROJECT 1 — copy this whole <section class="project"> block to add more projects -->
+  <!-- ============================================= -->
+  <section class="project">
+    <div class="node">01</div>
+    <div class="category">Computer Vision / Biomedical Technology</div>
+    <h2>Gesture-Controlled 3D Anatomical Visualizer</h2>
+
+    <div class="project-grid">
+      <div class="description">
+        <p>
+          <strong>Description:</strong>
+          Developing a computer-vision interface that uses a standard laptop camera to track hand
+          and fingertip movements and translate them into real-time manipulation of 3D anatomical
+          models. The system is designed to explore a contactless approach to interacting with
+          anatomical visualizations, with potential applications in surgical environments where
+          minimizing physical interaction with computers could be beneficial.
+        </p>
+        <p>
+          The current prototype uses hand landmark detection to control 3D model rotation through
+          fingertip movement and zoom through a pinch gesture. The application supports OBJ
+          models, with additional support for STL and PLY formats. Future versions will explore
+          integration with full-scale MRI and CT brain scans, higher-performance rendering, and
+          more advanced interaction with high-resolution anatomical data.
+        </p>
+        <div class="tags">
+          <span>Python</span>
+          <span>MediaPipe</span>
+          <span>OpenCV</span>
+          <span>3D Visualization</span>
+        </div>
+        <div class="links">
+          <a href="gesture-controlled-anatomical-visualizer-code.html" target="_blank" rel="noopener noreferrer">View code →</a>
+        </div>
+      </div>
+
+      <div class="media">
+        <!-- Looping demo GIF (GIFs autoplay natively, no controls needed) -->
+        <img src="assets/gesture_control_demo_noblackbars.gif" alt="Demo of the gesture-controlled anatomical visualizer">
+        <div class="caption">Demo — Gesture-Controlled 3D Anatomical Visualizer</div>
+        <!-- Static image underneath the gif -->
+        <img src="[path/to/image.png]" alt="Screenshot of the anatomical visualizer" style="margin-top: 0.9rem;">
+
+        <!-- Realistic heart render, cut out with a transparent background -->
+        <div class="heart-render">
+          <img src="assets/heart_realistic_transparent.png" alt="Realistic 3D render of a human heart">
+        </div>
+        <div class="caption">Render — "Realistic Human Heart" by neshallads (Sketchfab, CC BY 4.0)</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================= -->
+  <!-- PROJECT 2 -->
+  <!-- ============================================= -->
+  <section class="project">
+    <div class="node">02</div>
+    <div class="category">Medical Devices, SolidWorks</div>
+    <h2>Coming Soon</h2>
+  </section>
+
+</main>
+
+<footer>
+  © Sathya Senthil — built with GitHub Pages
+</footer>
+
+</body>
+</html>
