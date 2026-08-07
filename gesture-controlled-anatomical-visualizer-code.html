@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gesture-Controlled 3D Anatomical Visualizer — Code</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+<style>
+  :root {
+    --bg: #1b1c1e;
+    --bg-panel: #232427;
+    --bg-panel-2: #1f2023;
+    --line: #34363a;
+    --white: #f2f3f5;
+    --white-dim: #b9bbc0;
+    --white-faint: #7d7f84;
+    --blue: #3d6fb4;
+    --blue-bright: #6fa3e0;
+    --blue-deep: #16273d;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--white);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+
+  a { color: var(--blue-bright); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  :focus-visible {
+    outline: 2px solid var(--blue-bright);
+    outline-offset: 3px;
+  }
+
+  /* ---------- Top bar ---------- */
+
+  .topbar {
+    border-bottom: 1px solid var(--line);
+    padding: 1.1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .topbar .left {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+  }
+
+  .topbar .back {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--white-dim);
+    white-space: nowrap;
+  }
+  .topbar .back:hover { color: var(--blue-bright); }
+
+  .topbar h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--white);
+  }
+
+  .topbar .repo-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--white-faint);
+  }
+
+  .topbar .actions {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+  }
+
+  .btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--blue-bright);
+    border: 1px solid var(--blue);
+    background: var(--blue-deep);
+    border-radius: 4px;
+    padding: 0.45rem 0.8rem;
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--blue); color: var(--white); text-decoration: none; }
+
+  /* ---------- Layout ---------- */
+
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: calc(100vh - 64px);
+  }
+
+  nav.tree {
+    border-right: 1px solid var(--line);
+    padding: 1.2rem 0.9rem;
+    background: var(--bg-panel-2);
+  }
+
+  nav.tree .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--white-faint);
+    padding: 0 0.5rem;
+    margin: 1.1rem 0 0.4rem;
+  }
+  nav.tree .section-label:first-child { margin-top: 0; }
+
+  .tree-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--white-dim);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .tree-item:hover { background: var(--bg-panel); color: var(--white); }
+  .tree-item.active { background: var(--blue-deep); color: var(--blue-bright); }
+  .tree-item .icon { opacity: 0.7; font-size: 0.9em; }
+
+  .tree-item.folder {
+    color: var(--white-faint);
+    cursor: default;
+  }
+  .tree-item.folder:hover { background: none; color: var(--white-faint); }
+
+  .binary-note {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--white-faint);
+    padding: 0.15rem 0.5rem 0.15rem 1.8rem;
+    line-height: 1.5;
+  }
+
+  /* ---------- Code panel ---------- */
+
+  .code-panel {
+    padding: 1.4rem 1.8rem 3rem;
+    overflow-x: auto;
+  }
+
+  .file-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .file-header .path {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.88rem;
+    color: var(--white);
+  }
+
+  .file-header .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--white-faint);
+  }
+
+  pre {
+    margin: 0;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    overflow: auto;
+  }
+
+  pre code.hljs {
+    padding: 1.2rem !important;
+    font-family: 'JetBrains Mono', monospace !important;
+    font-size: 0.82rem !important;
+    line-height: 1.65 !important;
+    background: var(--bg-panel) !important;
+  }
+
+  .readme-box {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1.4rem 1.6rem;
+    color: var(--white-dim);
+    font-size: 0.92rem;
+  }
+  .readme-box code {
+    font-family: 'JetBrains Mono', monospace;
+    background: var(--bg-panel-2);
+    padding: 0.15rem 0.35rem;
+    border-radius: 3px;
+    font-size: 0.85em;
+  }
+
+  @media (max-width: 780px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.tree {
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.3rem;
+      padding: 0.9rem;
+    }
+    nav.tree .section-label { display: none; }
+    .binary-note { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="left">
+    <a class="back" href="index.html">&larr; back to portfolio</a>
+    <h1>Gesture-Controlled 3D Anatomical Visualizer</h1>
+    <span class="repo-name">/ source</span>
+  </div>
+  <div class="actions">
+    <a class="btn" href="assets/gesture-controlled-anatomical-visualizer.zip" download>Download .zip</a>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="tree" id="tree"></nav>
+  <div class="code-panel">
+    <div class="file-header">
+      <span class="path" id="current-path">main.py</span>
+      <span class="meta" id="current-meta"></span>
+    </div>
+    <div id="view"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+<script>
+const FILES = {"main.py": "print(\"Script started\")\nimport cv2\nimport mediapipe as mp\nfrom mediapipe.tasks import python\nfrom mediapipe.tasks.python import vision\nimport matplotlib\nmatplotlib.use('TkAgg')\nimport matplotlib.pyplot as plt\nfrom mpl_toolkits.mplot3d.art3d import Poly3DCollection\nimport numpy as np\nimport time\nimport os\nimport math\nimport sys\n\nmodel_path = 'models/hand_landmarker.task'\n\nhand_connections = [\n    (0, 1), (1, 2), (2, 3), (3, 4),\n    (0, 5), (5, 6), (6, 7), (7, 8),\n    (0, 9), (9, 10), (10, 11), (11, 12),\n    (0, 13), (13, 14), (14, 15), (15, 16),\n    (0, 17), (17, 18), (18, 19), (19, 20),\n    (5, 9), (9, 13), (13, 17)\n]\n\nBaseOptions = mp.tasks.BaseOptions\nHandLandmarker = mp.tasks.vision.HandLandmarker\nHandLandmarkerOptions = mp.tasks.vision.HandLandmarkerOptions\nVisionRunningMode = mp.tasks.vision.RunningMode\n\noptions = HandLandmarkerOptions(\n    base_options=BaseOptions(model_asset_path=model_path),\n    running_mode=VisionRunningMode.VIDEO,\n    num_hands=1)\nlandmarker = HandLandmarker.create_from_options(options)\n\ncap = None\nfor i in range(3):\n    print(\"Checking camera setup...\")\n    cap = cv2.VideoCapture(i)\n    time.sleep(2)\n    if cap.isOpened():\n        break\n    else:\n        cap.release()\nif not cap or not cap.isOpened():\n    print(\"Failed to open camera.\")\n    exit()\nprint(\"Camera opened successfully.\")\ncap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)\ncap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)\ncap.set(cv2.CAP_PROP_FRAME_WIDTH, 320)\ncap.set(cv2.CAP_PROP_FRAME_HEIGHT, 240)\n\ncv2.namedWindow('Hand Tracking', cv2.WINDOW_NORMAL)\ncv2.resizeWindow('Hand Tracking', 640, 480)\ncv2.moveWindow('Hand Tracking', 50, 50)\n\nmesh_window_x = 750\nmesh_window_y = 50\n\nimport glob\nmodel_path = None\nfaces = None\ncolors = None\n\n\nobj_dir = 'obj_models'\nobj_files = [f for f in os.listdir(obj_dir) if f.lower().endswith('.obj')] if os.path.exists(obj_dir) else []\n\nprint(\"[DEBUG] Model selection complete, proceeding to main loop setup.\")\nusing_obj = False\nusing_stl = False\nusing_ply = False\nusing_cube = False\nprint(\"Checking for OBJ/STL/PLY/Cube model...\")\nif obj_files:\n    print(\"OBJ file found: \", obj_files[0])\n    try:\n        import trimesh\n        from PIL import Image\n        obj_path = os.path.join(obj_dir, obj_files[0])\n        mesh = trimesh.load(obj_path, force='mesh')\n        vertices = mesh.vertices\n        faces_idx = mesh.faces\n        min_coords = vertices.min(axis=0)\n        max_coords = vertices.max(axis=0)\n        center = (min_coords + max_coords) / 2\n        scale = 1.0 / max(max_coords - min_coords)\n        vertices = (vertices - center) * scale\n        poly_faces = [vertices[face] for face in faces_idx]\n        colors = None\n        if hasattr(mesh.visual, 'uv') and mesh.visual.uv is not None and hasattr(mesh.visual, 'material') and hasattr(mesh.visual.material, 'image') and mesh.visual.material.image is not None:\n            tex_img = mesh.visual.material.image\n            uv = mesh.visual.uv\n            tex_np = np.array(tex_img)\n            face_colors = []\n            for face in faces_idx:\n                uv_face = uv[face]\n                h, w = tex_np.shape[0], tex_np.shape[1]\n                px = (uv_face[:, 0] * w).astype(int)\n                py = ((1 - uv_face[:, 1]) * h).astype(int)\n                px = np.clip(px, 0, w - 1)\n                py = np.clip(py, 0, h - 1)\n                samples = tex_np[py, px]\n                avg_color = np.mean(samples[:, :3], axis=0) / 255.0\n                face_colors.append(tuple(avg_color))\n            colors = face_colors\n        elif hasattr(mesh.visual, 'vertex_colors') and mesh.visual.vertex_colors is not None:\n            colors = mesh.visual.vertex_colors[:, :3] / 255.0\n            colors = [tuple(c) for c in colors]\n        else:\n            colors = [(0.7, 0.7, 0.7)] * len(poly_faces)\n        faces = poly_faces\n        using_obj = True\n    except Exception as e:\n        print(f\"Error loading OBJ file: {e}\")\n        print(\"Falling back to STL/PLY/Cube.\")\n        using_obj = False\nif not using_obj:\n    stl_candidates = []\n    if os.path.exists('models'):\n        stl_candidates += [('models', f) for f in os.listdir('models') if f.lower().endswith('.stl')]\n    if os.path.exists('stl_models'):\n        stl_candidates += [('stl_models', f) for f in os.listdir('stl_models') if f.lower().endswith('.stl')]\n    if stl_candidates:\n        found_dir, found_file = stl_candidates[0]\n        print(\"STL file found: \", found_file, \"in\", found_dir)\n        from stl import mesh as npmesh\n        model_path = os.path.join(found_dir, found_file)\n        mesh_data = npmesh.Mesh.from_file(model_path)\n        points = mesh_data.vectors.reshape(-1, 3)\n        min_coords = points.min(axis=0)\n        max_coords = points.max(axis=0)\n        center = (min_coords + max_coords) / 2\n        scale = 1.0 / max(max_coords - min_coords)\n        mesh_data.vectors = (mesh_data.vectors - center) * scale\n        faces = mesh_data.vectors\n        colors = 'cyan'\n        using_stl = True\n    else:\n        ply_dir = 'ply_models'\n        ply_files = [f for f in os.listdir(ply_dir) if f.lower().endswith('.ply')] if os.path.exists(ply_dir) else []\n        if ply_files:\n            print(\"PLY file found: \", ply_files[0])\n            try:\n                import trimesh\n                ply_path = os.path.join(ply_dir, ply_files[0])\n                mesh = trimesh.load(ply_path)\n                vertices = mesh.vertices\n                faces = mesh.faces\n                min_coords = vertices.min(axis=0)\n                max_coords = vertices.max(axis=0)\n                center = (min_coords + max_coords) / 2\n                scale = 1.0 / max(max_coords - min_coords)\n                vertices = (vertices - center) * scale\n                poly_faces = [vertices[face] for face in faces]\n                colors = [(0.5, 0.0, 0.0)] * len(faces)\n                faces = poly_faces\n                using_ply = True\n            except Exception as e:\n                print(f\"Error loading PLY file: {e}\")\n                print(\"Falling back to cube.\")\n                using_ply = False\n        if not using_stl and not using_ply:\n            print(\"No OBJ, STL or PLY found, using cube.\")\n            vertices = np.array([\n                [0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0],\n                [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]\n            ])\n            faces = [\n                [vertices[0], vertices[1], vertices[2], vertices[3]],\n                [vertices[4], vertices[5], vertices[6], vertices[7]],\n                [vertices[0], vertices[1], vertices[5], vertices[4]],\n                [vertices[1], vertices[2], vertices[6], vertices[5]],\n                [vertices[2], vertices[3], vertices[7], vertices[6]],\n                [vertices[3], vertices[0], vertices[4], vertices[7]]\n            ]\n            colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange']\n            using_cube = True\n\ndef make_axes_equal(ax):\n    extents = np.array([getattr(ax, f\"get_{dim}lim\")() for dim in ('x', 'y', 'z')])\n    sz = extents[:,1] - extents[:,0]\n    centers = np.mean(extents, axis=1)\n    maxsize = max(abs(sz))\n    r = maxsize / 2\n    ax.set_xlim(centers[0] - r, centers[0] + r)\n    ax.set_ylim(centers[1] - r, centers[1] + r)\n    ax.set_zlim(centers[2] - r, centers[2] + r)\n\ndef zoom_axes(ax, factor):\n    def shrink(lim):\n        center = (lim[0] + lim[1]) / 2.0\n        half = (lim[1] - lim[0]) / 2.0\n        new_half = half * factor\n        return (center - new_half, center + new_half)\n    ax.set_xlim(shrink(ax.get_xlim()))\n    ax.set_ylim(shrink(ax.get_ylim()))\n    ax.set_zlim(shrink(ax.get_zlim()))\n\ndef render_solid_mesh(faces, colors=None, title='3D Mesh'):\n    if faces is None or len(faces) == 0:\n        print('[WARN] No faces to render.')\n        return None\n    plt.ion()\n    fig = plt.figure(title)\n    ax = fig.add_subplot(111, projection='3d')\n    facecolors = None\n    if isinstance(colors, list) and len(colors) == len(faces):\n        facecolors = colors\n    elif colors is not None:\n        facecolors = [colors] * len(faces)\n    else:\n        facecolors = [(0.7, 0.7, 0.7)] * len(faces)\n\n    poly = Poly3DCollection(faces, facecolors=facecolors, linewidths=0.15, edgecolors='k')\n    poly.set_facecolor(facecolors)\n    ax.add_collection3d(poly)\n    all_verts = np.vstack([np.asarray(f).reshape(-1, 3) for f in faces])\n    ax.auto_scale_xyz(all_verts[:,0], all_verts[:,1], all_verts[:,2])\n    make_axes_equal(ax)\n    ax.set_axis_off()\n    fig.canvas.draw()\n    plt.pause(0.001)\n    return fig, ax\n\nmesh_fig = None\nmesh_ax = None\ntry:\n    if faces is not None:\n        print('[INFO] Rendering 3D mesh in a separate window...')\n        res = render_solid_mesh(faces, colors)\n        if res is not None:\n            mesh_fig, mesh_ax = res\n            print(f\"[INFO] 3D renderer ready: fig={mesh_fig}, ax={mesh_ax}\")\n            try:\n                manager = mesh_fig.canvas.manager\n                if hasattr(manager, 'window'):\n                    manager.window.wm_geometry(f'+{mesh_window_x}+{mesh_window_y}')\n            except Exception as e:\n                print(f\"[WARN] Could not position 3D window: {e}\")\n            try:\n                zoom_axes(mesh_ax, 0.65)\n                base_limits = (\n                    mesh_ax.get_xlim(), mesh_ax.get_ylim(), mesh_ax.get_zlim()\n                )\n            except Exception as e:\n                print(f\"[WARN] Could not apply initial zoom: {e}\")\n        else:\n            mesh_fig = mesh_ax = None\nexcept Exception as e:\n    print(f'[ERROR] Failed to render mesh: {e}')\n\nazim = mesh_ax.azim if mesh_ax is not None and hasattr(mesh_ax, 'azim') else -60\nelev = mesh_ax.elev if mesh_ax is not None and hasattr(mesh_ax, 'elev') else 30\nprev_hand_x = None\nprev_hand_y = None\ninitial_pinch = None\nbase_limits = None\nrotate_sens = 720.0\nzoom_sens = 1.8\n\n\nframe_count = 0\nprint(\"Entering main loop...\")\nprint(\"[DEBUG] Entered main loop, starting frame read loop.\")\nwhile cap.isOpened():\n    ret, frame = cap.read()\n    if not ret:\n        print(\"[ERROR] Failed to read frame from camera.\")\n        break\n    else:\n        print(\"[INFO] Frame read from camera.\")\n    mouse_control = False\n    mouse_x, mouse_y = None, None\n    error_msgs = []\n    try:\n        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)\n    except Exception as e:\n        print(f\"[ERROR] cvtColor failed: {e}\")\n        break\n    try:\n        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)\n    except Exception as e:\n        print(f\"[ERROR] MediaPipe image creation failed: {e}\")\n        break\n    try:\n        hand_landmarker_result = landmarker.detect_for_video(mp_image, frame_count)\n    except Exception as e:\n        print(f\"[ERROR] MediaPipe hand detection failed: {e}\")\n        break\n    if hand_landmarker_result.hand_landmarks:\n        hand_landmarks = hand_landmarker_result.hand_landmarks[0]\n        index_tip = hand_landmarks[8]\n        thumb_tip = hand_landmarks[4]\n        mouse_control = True\n        x = int(index_tip.x * frame.shape[1])\n        y = int(index_tip.y * frame.shape[0])\n        tx = int(thumb_tip.x * frame.shape[1])\n        ty = int(thumb_tip.y * frame.shape[0])\n        mouse_x, mouse_y = x, y\n        cv2.circle(frame, (x, y), 10, (0, 255, 0), -1)\n        cv2.circle(frame, (tx, ty), 10, (255, 0, 0), -1)\n        cv2.line(frame, (x, y), (tx, ty), (255, 255, 0), 2)\n    else:\n        error_msgs.append(\"[WARN] No hand detected in frame.\")\n        prev_hand_x = None\n        prev_hand_y = None\n        initial_pinch = None\n\n    if mouse_control and mouse_x is not None and mouse_y is not None:\n        try:\n            if mesh_ax is not None:\n                nx = index_tip.x\n                ny = index_tip.y\n                if prev_hand_x is None:\n                    prev_hand_x = nx\n                    prev_hand_y = ny\n                dx = nx - prev_hand_x\n                dy = ny - prev_hand_y\n                prev_hand_x = nx\n                prev_hand_y = ny\n\n                azim += dx * rotate_sens\n                elev += dy * rotate_sens * 0.5\n                mesh_ax.view_init(elev, azim)\n                print(f\"[DEBUG] 3D view updated: azim={azim:.1f}, elev={elev:.1f}\")\n\n                try:\n                    thumb_tip = hand_landmarks[4]\n                    pinch = math.sqrt((index_tip.x - thumb_tip.x) ** 2 + (index_tip.y - thumb_tip.y) ** 2 + (getattr(index_tip, 'z', 0) - getattr(thumb_tip, 'z', 0)) ** 2)\n                except Exception:\n                    pinch = None\n\n                scale = 1.0\n                if pinch is not None:\n                    if initial_pinch is None:\n                        initial_pinch = pinch\n                        base_limits = (\n                            mesh_ax.get_xlim(), mesh_ax.get_ylim(), mesh_ax.get_zlim()\n                        )\n                    else:\n                        if pinch <= 0:\n                            pinch = 1e-6\n                        scale = 1.0 + (initial_pinch - pinch) * zoom_sens\n                        scale = max(0.25, min(3.0, scale))\n                        xlim, ylim, zlim = base_limits\n                        def scale_limits(lim):\n                            c = (lim[0] + lim[1]) / 2.0\n                            half = (lim[1] - lim[0]) / 2.0\n                            new_half = half * scale\n                            return (c - new_half, c + new_half)\n                        mesh_ax.set_xlim(scale_limits(xlim))\n                        mesh_ax.set_ylim(scale_limits(ylim))\n                        mesh_ax.set_zlim(scale_limits(zlim))\n\n                if pinch is not None:\n                    line_width = int(np.clip(2 + abs(scale - 1.0) * 8, 2, 12))\n                    cv2.line(frame, (x, y), (tx, ty), (0, 255, 255), line_width)\n                else:\n                    cv2.line(frame, (x, y), (tx, ty), (0, 255, 255), 2)\n\n                try:\n                    mesh_fig.canvas.draw()\n                    mesh_fig.canvas.flush_events()\n                except Exception:\n                    plt.pause(0.001)\n        except Exception as e:\n            print(f\"[ERROR] 3D control update failed: {e}\")\n\n    if error_msgs:\n        for msg in error_msgs:\n            print(msg)\n\n    print(\"[DEBUG] About to call cv2.imshow\")\n    try:\n        cv2.imshow('Hand Tracking', frame)\n        print(\"[DEBUG] cv2.imshow called successfully\")\n    except Exception as e:\n        print(f\"[ERROR] cv2.imshow failed: {e}\")\n        break\n    print(\"[DEBUG] About to call cv2.waitKey\")\n    try:\n        key = cv2.waitKey(1)\n        print(\"[DEBUG] cv2.waitKey called successfully\")\n    except Exception as e:\n        print(f\"[ERROR] cv2.waitKey failed: {e}\")\n        break\n    if key & 0xFF == ord('q'):\n        print(\"[INFO] Quit requested by user.\")\n        break\n    frame_count += 1\n\ncap.release()\ncv2.destroyAllWindows()\nlandmarker.close()\nprint(\"Hand tracking and 3D control stopped.\")\n", "requirements.txt": "opencv-python\nmediapipe\nmatplotlib\nnumpy\ntrimesh\nPillow\nnumpy-stl\n", ".gitignore": "# Python\n__pycache__/\n*.py[cod]\n*$py.class\n\n# Virtual environments\n.venv/\nvenv/\nenv/\n\n# IDE / editor\n.vscode/\n.idea/\n\n# OS\n.DS_Store\nThumbs.db\n\n# Python tooling\n.pytest_cache/\n.mypy_cache/\n\n# Local logs / debug output\n*.log\n\n# Project-specific large/model assets\n# Uncomment these if you do not have permission to redistribute the files:\n# models/hand_landmarker.task\n# obj_models/*\n# stl_models/*\n# ply_models/*\n\n# Keep folder placeholders\n!.gitkeep\n", "models/README.md": "Place the MediaPipe hand_landmarker.task model asset in this directory. The file is intentionally not included here because its source/license was not provided.\n"};
+
+const fileMeta = {
+  "main.py": { lang: "python", label: "main.py", lines: 399 },
+  "requirements.txt": { lang: "plaintext", label: "requirements.txt", lines: 7 },
+  ".gitignore": { lang: "plaintext", label: ".gitignore", lines: 34 },
+  "models/README.md": { lang: "markdown", label: "models/README.md", lines: 1 }
+};
+
+const binaryFolders = [
+  { name: "demo/", note: "gesture_controls_demo.mp4, gesture_control_demo_2.mp4 — video, not shown inline" },
+  { name: "screenshots/", note: "gesture_control_demo_1.png, gesture_control_demo_2.png, human_brain_original_obj.png" },
+  { name: "obj_models/", note: "human-brain (1).obj — 3D mesh, not shown inline" },
+  { name: "ply_models/", note: "empty — user-supplied .ply models go here" },
+  { name: "stl_models/", note: "empty — user-supplied .stl models go here" },
+  { name: "models/", note: "hand_landmarker.task expected here (not redistributed)" }
+];
+
+const treeEl = document.getElementById('tree');
+const viewEl = document.getElementById('view');
+const pathEl = document.getElementById('current-path');
+const metaEl = document.getElementById('current-meta');
+
+function buildTree() {
+  let html = '<div class="section-label">Files</div>';
+  Object.keys(fileMeta).forEach(key => {
+    html += `<button class="tree-item" data-file="${key}"><span class="icon">&#128196;</span>${fileMeta[key].label}</button>`;
+  });
+  html += '<div class="section-label">Folders (binary assets)</div>';
+  binaryFolders.forEach(f => {
+    html += `<div class="tree-item folder"><span class="icon">&#128193;</span>${f.name}</div>`;
+    html += `<div class="binary-note">${f.note}</div>`;
+  });
+  treeEl.innerHTML = html;
+  treeEl.querySelectorAll('.tree-item[data-file]').forEach(btn => {
+    btn.addEventListener('click', () => showFile(btn.getAttribute('data-file')));
+  });
+}
+
+function showFile(key) {
+  treeEl.querySelectorAll('.tree-item[data-file]').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-file') === key);
+  });
+  const meta = fileMeta[key];
+  const content = FILES[key];
+  pathEl.textContent = key;
+  metaEl.textContent = meta.lines + ' lines';
+
+  if (key === "models/README.md") {
+    viewEl.innerHTML = `<div class="readme-box">${content.split('\n').map(l => `<p>${l || '&nbsp;'}</p>`).join('')}</div>`;
+    return;
+  }
+
+  const codeEl = document.createElement('pre');
+  const code = document.createElement('code');
+  code.className = meta.lang;
+  code.textContent = content;
+  codeEl.appendChild(code);
+  viewEl.innerHTML = '';
+  viewEl.appendChild(codeEl);
+  if (meta.lang !== 'plaintext') {
+    hljs.highlightElement(code);
+  }
+}
+
+buildTree();
+showFile('main.py');
+document.querySelector('.tree-item[data-file="main.py"]').classList.add('active');
+</script>
+
+</body>
+</html>
